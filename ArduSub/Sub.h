@@ -440,6 +440,8 @@ private:
     float get_auto_heading(void);
     bool circle_init(void);
     void circle_run();
+    bool circle8_init(void);        //  add 2023.06.26
+    void circle8_run();             //  add 2023.06.26
     bool guided_init(bool ignore_checks = false);
     void guided_pos_control_start();
     void guided_vel_control_start();
@@ -611,6 +613,25 @@ private:
 
 public:
     void mainloop_failsafe_check();
+
+// 2023.06.28 add
+
+protected:
+    enum Circle8_mode {
+        Circle8_init = 0,
+        Circle8_wait1stHalf,
+        Circle8_wait1stDone,
+        Circle8_wait2ndHalf,
+        Circle8_wait2ndDone
+    };
+
+    Location LocBeginC8;
+    Circle8_mode Circle8State;
+    Vector3p Circle8CenterPos,
+            Circle8NextCenterPos;
+    float Circle8Radius;
+
+
 };
 
 extern const AP_HAL::HAL& hal;
