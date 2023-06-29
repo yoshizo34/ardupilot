@@ -11,7 +11,7 @@ bool Sub::circle8_init()
         return false;
     }
 
-    gcs().send_text(MAV_SEVERITY_INFO, "mode circle8 init.");
+    gcs().send_text( MAV_SEVERITY_DEBUG, "mode circle8 init." );
 
     circle_pilot_yaw_override = false;
 
@@ -24,22 +24,22 @@ bool Sub::circle8_init()
     // initialise circle controller including setting the circle center based on vehicle speed
     circle_nav.init();
 
-#if 1
     // current location saveed.
-    LocBeginC8 = current_loc; 
-    Circle8State = Circle8_init;
+    LocBeginC8          = current_loc;      //  始点の座標を現在の座標で初期化
+    Circle8State        = Circle8LastState = Circle8_init;     //  ステートマシンを初期状態へ
 
-    Circle8CenterPos = circle_nav.get_center();
-    Circle8NextCenterPos = Circle8CenterPos;
-    Circle8NextCenterPos.rotate( ROTATION_YAW_180 );
+    Circle8CenterPos1st = circle_nav.get_center();      //  1つ目の円の中心をナビから取得
+    Circle8CenterPos2nd = Circle8CenterPos1st;          //  ２つ目の円の中心は１つ目の円の中心をヨー方向に180°回転
+    Circle8CenterPos2nd.rotate( ROTATION_YAW_180 );
 
     Circle8Radius = circle_nav.get_radius() / 100.0;    //  cmなのでmに変換
+    Circle8SetClimb_rate = 0;       //  上昇率をクリア
 
-    gcs().send_text(MAV_SEVERITY_INFO, "center: ( %f, %f )", Circle8CenterPos.x, Circle8CenterPos.y );
-    gcs().send_text(MAV_SEVERITY_INFO, "2nd center: ( %f, %f )", Circle8NextCenterPos.x, Circle8NextCenterPos.y );
-    gcs().send_text(MAV_SEVERITY_INFO, "radius: %f, %f(m) )", circle_nav.get_radius(), Circle8Radius );
-
-#endif
+    gcs().send_text( MAV_SEVERITY_DEBUG, "1st center: ( %f, %f )",  Circle8CenterPos1st.x, Circle8CenterPos1st.y );
+    gcs().send_text( MAV_SEVERITY_DEBUG, "2nd center: ( %f, %f )",  Circle8CenterPos2nd.x, Circle8CenterPos2nd.y );
+    gcs().send_text( MAV_SEVERITY_DEBUG, "radius: %f(cm), %f(m)",   circle_nav.get_radius(), Circle8Radius );
+    gcs().send_text( MAV_SEVERITY_DEBUG, "distance judge: %f(m)",   Circle8_Define_DistanceJudge );
+    gcs().send_text( MAV_SEVERITY_DEBUG, "climb rate: %f(cm/s)",    Circle8_Define_Crimb_rate );
 
     return true;
 }
@@ -49,7 +49,7 @@ bool Sub::circle8_init()
 void Sub::circle8_run()
 {
     float target_yaw_rate = 0;
-    float target_climb_rate = 0;
+    // float target_climb_rate = 0;
 
     // update parameters, to allow changing at runtime
     pos_control.set_max_speed_accel_xy(wp_nav.get_default_speed_xy(), wp_nav.get_wp_acceleration());
@@ -66,66 +66,65 @@ void Sub::circle8_run()
         return;
     }
 
-#if 1
-{
-    float Distance = ( float ) current_loc.get_distance( LocBeginC8 );
-//    gcs().send_text(MAV_SEVERITY_INFO, "mode circle8 run.");
-//    gcs().send_text(MAV_SEVERITY_INFO, "distance: %f", Distance );
+    float   Distance    = ( float ) current_loc.get_distance( LocBeginC8 );     //  始点の座標からの距離を取得(m)
+    Vector3f DistanceNED = current_loc.get_distance_NED( LocBeginC8 );      //  始点座標からのNEDを取得
 
     switch( Circle8State ){
-        case Circle8_init:
-            Circle8State = Circle8_wait1stHalf;
-            gcs().send_text(MAV_SEVERITY_INFO, "state: init -> wait1sthalf" );
+        case Circle8_init:      //  初期処理
+            Circle8State = Circle8_wait1stHalf;     //  次のステート
+            Circle8SetClimb_rate = Circle8_Define_Crimb_rate * -1.0;       //  定義値で下降
         break;
 
-        case Circle8_wait1stHalf:
-            if( Distance >  20.0 - 0.5 )
+        case Circle8_wait1stHalf:       //  初期位置～1つ目の円の半分まで待ち。
+            if( Distance >  ( Circle8Radius * 2.0 ) - Circle8_Define_DistanceJudge )     //  初期位置から2r離れたので折り返し地点と判断
             {
-                Circle8State = Circle8_wait1stDone;
-                gcs().send_text(MAV_SEVERITY_INFO, "state: wait1sthalf -> wait1stdone" );
+                Circle8State = Circle8_wait1stDone;     //  次のステート
+                Circle8SetClimb_rate = Circle8_Define_Crimb_rate;       //  定義値で上昇
             }
         break;
 
-        case Circle8_wait1stDone:
-            if( Distance < 0.5 )
+        case Circle8_wait1stDone:       //  １つ目の円が終わるまで待ち。
+            if( Distance < Circle8_Define_DistanceJudge )        //  初期位置にほぼ入れば到達。
             {
-                Circle8State = Circle8_wait2ndHalf;
+                Circle8State = Circle8_wait2ndHalf;     //  次のステート
+                Circle8SetClimb_rate = Circle8_Define_Crimb_rate * -1.0;       //  定義値で下降
 
-                Location NewCenter( Circle8NextCenterPos, LocBeginC8.get_alt_frame() );
-                circle_nav.set_center( NewCenter );
-                LocBeginC8 = current_loc; 
+                //  ナビを2つ目の円の中心点で初期化、回転方向を逆に
+                circle_nav.init( Circle8CenterPos2nd, circle_nav.center_is_terrain_alt(), circle_nav.get_rate_current() * -1.0 );
+             }
+        break;
 
-                gcs().send_text(MAV_SEVERITY_INFO, "state: wait1stdone -> wait2ndHalf" );
+        case Circle8_wait2ndHalf:       //  ２つ目の円の初期位置～円の半分まで待ち
+            if( Distance > ( Circle8Radius * 2.0 ) - Circle8_Define_DistanceJudge )      //  初期位置から2r離れたので折り返し地点
+            {
+                Circle8State = Circle8_wait2ndDone;     //  次のステート
+                Circle8SetClimb_rate = Circle8_Define_Crimb_rate;       //  定義値で上昇
+             }
+        break;
+
+        case Circle8_wait2ndDone:       //  ２つ目の円が終わるまで待ち
+            if( Distance < Circle8_Define_DistanceJudge )        //  初期位置に到達
+            {
+                Circle8State = Circle8_wait1stHalf;     //  次のステート
+
+                Circle8SetClimb_rate = Circle8_Define_Crimb_rate * -1.0;       //  定義値で下降
+
+                //  ナビを１つ目の円の中心点で初期化、回転方向を逆に
+                circle_nav.init( Circle8CenterPos1st, circle_nav.center_is_terrain_alt(), circle_nav.get_rate_current() * -1.0 );
             }
         break;
 
-        case Circle8_wait2ndHalf:
-            if( Distance > 20.0 - 0.5 )
-            {
-                Circle8State = Circle8_wait2ndDone;
-                gcs().send_text(MAV_SEVERITY_INFO, "state: wait2ndHalf -> wait2ndDone" );
-            }
+        default:    //  enumなのでここには来ない…はず
         break;
-
-        case Circle8_wait2ndDone:
-            if( Distance < 0.5 )
-            {
-                Circle8State = Circle8_wait1stHalf;
-
-                Location NewCenter( Circle8CenterPos, LocBeginC8.get_alt_frame() );
-                circle_nav.set_center( NewCenter );
-
-                gcs().send_text(MAV_SEVERITY_INFO, "state: wait1stdone -> wait1stHalf" );
-            }
-        break;
-
-        default:
-        break;
-
     }
 
-}
-#endif
+    if( Circle8LastState != Circle8State )      //  前回とステートが違う
+    {
+        gcs().send_text( MAV_SEVERITY_DEBUG, "state: %d -> %d, distance=%f, depth=%f", 
+                Circle8LastState, Circle8State, Distance, DistanceNED.z );
+    }
+
+    Circle8LastState = Circle8State;    //  前回ステート更新
 
     // process pilot inputs
     // get pilot's desired yaw rate
@@ -135,7 +134,7 @@ void Sub::circle8_run()
     }
 
     // get pilot desired climb rate
-    target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
+    // target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
 
     // set motors to full range
     motors.set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
@@ -161,6 +160,6 @@ void Sub::circle8_run()
     }
 
     // update altitude target and call position controller
-    pos_control.set_pos_target_z_from_climb_rate_cm(target_climb_rate);
+    pos_control.set_pos_target_z_from_climb_rate_cm( Circle8SetClimb_rate );
     pos_control.update_z_controller();
 }
