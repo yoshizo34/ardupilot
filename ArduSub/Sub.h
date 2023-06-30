@@ -617,6 +617,7 @@ public:
 // 2023.06.28 add
 
 protected:
+    //  ８の字モードのステート管理用
     enum Circle8_mode {
         Circle8_init = 0,
         Circle8_wait1stHalf,
@@ -625,12 +626,16 @@ protected:
         Circle8_wait2ndDone
     };
 
-    Location LocBeginC8;
-    Circle8_mode Circle8State;
-    Vector3p Circle8CenterPos,
-            Circle8NextCenterPos;
-    float Circle8Radius;
+    static constexpr float Circle8_Define_DistanceJudge = 0.1;       //  円の到達判定距離(m)
+    static constexpr float Circle8_Define_Crimb_rate = 5.0;           //  上昇率(cm/s)
 
+    Location        LocBeginC8;     //  現在の円の中心位置
+    Circle8_mode    Circle8State,
+                    Circle8LastState;   //  ステート
+    Vector3p        Circle8CenterPos1st,    //  １つ目の円の中心位置
+                    Circle8CenterPos2nd;    //  ２つ目の円の中心位置
+    float           Circle8Radius;          //  CIRCLE_RADIUS パラメータ保存用（m）
+    float           Circle8SetClimb_rate;       //  上昇率(cm/s)
 
 };
 
