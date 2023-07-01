@@ -1,5 +1,5 @@
 #include "Sub.h"
-#include "GCS_Mavlink.h"
+
 // stabilize_init - initialise stabilize controller
 bool Sub::hdhold_init()
 {
