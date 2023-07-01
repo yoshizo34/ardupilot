@@ -22,6 +22,7 @@ public:
         k_mode_circle           = 10,           ///< enter circle mode
         k_mode_guided           = 11,           ///< enter guided mode
         k_mode_acro             = 12,           ///< enter acro mode
+        k_mode_auto_dive        = 13,           ///< enter auto dive mode
 
         // 12-20 reserved for future mode functions
         k_mount_center          = 21,           ///< move mount to center

@@ -180,6 +180,9 @@ void Sub::handle_jsbutton_press(uint8_t _button, bool shift, bool held)
     case JSButton::button_function_t::k_mode_poshold:
         set_mode(POSHOLD, ModeReason::RC_COMMAND);
         break;
+    case JSButton::button_function_t::k_mode_auto_dive:
+        set_mode(AUTO_DIVE, ModeReason::RC_COMMAND);
+        break;
 
     case JSButton::button_function_t::k_mount_center:
 #if HAL_MOUNT_ENABLED

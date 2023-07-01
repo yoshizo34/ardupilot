@@ -468,6 +468,12 @@ private:
     bool motordetect_init();
     void motordetect_run();
 
+    bool auto_dive_init();
+    void auto_dive_run();
+
+    bool hdhold_init(void);
+    void hdhold_run();
+
     bool stabilize_init(void);
     void stabilize_run();
     void control_depth();
@@ -637,7 +643,30 @@ protected:
     float           Circle8Radius;          //  CIRCLE_RADIUS パラメータ保存用（m）
     float           Circle8SetClimb_rate;       //  上昇率(cm/s)
 
+// 2023.7.1 for auto dive
+protected:
+
+    static constexpr float Auto_DIVE_Define_descent_rate = -10.0;       //  下降スピード
+    static constexpr float Auto_DIVE_Define_circle_ = 5.0;           //  旋回半径
+    Location        LocCircleCenter;     //  現在の円の中心位置
+    float           target_Depth;          //  目標深度（m）
+    float           descent_rate;       //  上昇率(cm/s)
+
+// 2023.7.1 for hdhold 
+    //  hdhold state
+    enum HDHOLD_mode {
+        HDhold_init = 0,
+        HDhold_turn,
+        HDhold_done
+    };
+    uint32_t       target_heading;   //target heading
+
+    HDHOLD_mode    HDHOLD_state,
+                   HDHOLD_last;   //  ステート
+
+
 };
+
 
 extern const AP_HAL::HAL& hal;
 extern Sub sub;
