@@ -208,3 +208,9 @@
     MASK_LOG_CAMERA | \
     MASK_LOG_MOTBATT
 #endif
+
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////// 2023.7.1 add
+#ifndef DEFAULT_SET_HEADING
+ # define DEFAULT_SET_HEADING      4500     // default value for my new parameter
+#endif

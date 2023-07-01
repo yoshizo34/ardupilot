@@ -193,6 +193,7 @@ public:
         k_param_throttle_gain,
         k_param_cam_tilt_center, // deprecated
         k_param_frame_configuration,
+        k_param_set_heading, //mode 31 187
 
         // Acro Mode parameters
         k_param_acro_yaw_p = 220, // Used in all modes for get_pilot_desired_yaw_rate
@@ -217,6 +218,7 @@ public:
         k_param_pilot_speed_dn,
 
         k_param_vehicle = 257, // vehicle common block of parameters
+
     };
 
     AP_Int16        format_version;
@@ -260,6 +262,7 @@ public:
     // Misc
     //
     AP_Int32        log_bitmask;
+    AP_Int32        set_heading;
 
     AP_Int8         fs_ekf_action;
     AP_Int8         fs_crash_check;

@@ -1,5 +1,5 @@
 #include "Sub.h"
-
+#include "GCS_Mavlink.h"
 // stabilize_init - initialise stabilize controller
 bool Sub::hdhold_init()
 {
@@ -16,7 +16,7 @@ void Sub::hdhold_run()
 {
     float target_roll, target_pitch;
     last_pilot_heading = ahrs.yaw_sensor;
-    target_heading = 4500;
+    target_heading = g.set_heading;
     gcs().send_text( MAV_SEVERITY_DEBUG, "ahrs.yaw_sensor: %i(deg)",    last_pilot_heading );
 
     switch(HDHOLD_state){
@@ -31,13 +31,14 @@ void Sub::hdhold_run()
                 circle_nav.init();
                 return;
             }
+            
             HDHOLD_state = HDhold_turn;
         break;
 
         case HDhold_turn:
             gcs().send_text( MAV_SEVERITY_DEBUG, "hdhold_turn." );
             motors.set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
-            attitude_control.input_euler_angle_roll_pitch_yaw(0, 0, 4500, true);
+            attitude_control.input_euler_angle_roll_pitch_yaw(0, 0, target_heading, true);
             if (last_pilot_heading == target_heading){
                 HDHOLD_state = HDhold_done;
             }
