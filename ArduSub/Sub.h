@@ -474,6 +474,9 @@ private:
     bool hdhold_init(void);
     void hdhold_run();
 
+    bool survey_init(bool ignore_checks = false);
+    void survey_run();
+
     bool stabilize_init(void);
     void stabilize_run();
     void control_depth();
@@ -659,11 +662,24 @@ protected:
         HDhold_turn,
         HDhold_done
     };
+
     uint32_t       target_heading;   //target heading
 
     HDHOLD_mode    HDHOLD_state,
                    HDHOLD_last;   //  ステート
 
+// 2023.7.3 for survey mode 
+    //  survey mode state
+
+    enum SURVEY_mode {
+        SURVEY_init = 0,
+        SURVEY_run,
+        SURVEY_elev,
+        SURVEY_fin
+    };
+    uint32_t       vehicle_heading;   //target heading
+
+    SURVEY_mode    survey_state;   //  ステート
 
 };
 
