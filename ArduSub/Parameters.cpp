@@ -211,6 +211,37 @@ const AP_Param::Info Sub::var_info[] = {
     // @User: Standard
     GSCALAR(set_heading,    "SET_HEADING",          DEFAULT_SET_HEADING),
 
+    // @Param: SURVEY_ANGLE
+    // @DisplayName: survey angle
+    // @Description: for mode 32 
+    // @Values: 0 - 36000
+    // @unit: deg * 100
+    // @User: Standard
+    GSCALAR(survey_angle,    "SURVEY_ANGLE",          DEFAULT_SURVEY_ANGLE),
+
+    // @Param: SURVEY_LENGTH
+    // @DisplayName: survey length
+    // @Description: for mode 32 
+    // @Values: 0 - 2147483647
+    // @unit: cm
+    // @User: Standard
+    GSCALAR(survey_length,    "SURVEY_LENGTH",          DEFAULT_SURVEY_LENGTH),
+
+    // @Param: SURVEY_DESCENT
+    // @DisplayName: survey descent
+    // @Description: for mode 32 
+    // @Values: float minus 
+    // @unit: m
+    // @User: Standard
+    GSCALAR(survey_descent,    "SURVEY_DESCENT",          DEFAULT_SURVEY_DESCENT),
+
+    // @Param: SURVEY_MAXDEPTH
+    // @DisplayName: survey maxdepth
+    // @Description: for mode 32 
+    // @Values: float minus 
+    // @unit: m
+    // @User: Standard
+    GSCALAR(survey_maxdepth,    "SURVEY_MAXDEPTH",          DEFAULT_SURVEY_MAXDEPTH),
 
     // @Param: ANGLE_MAX
     // @DisplayName: Angle Max

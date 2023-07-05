@@ -28,18 +28,18 @@ bool Sub::survey_init(bool ignore_checks)
 void Sub::survey_run()
 {
     // set to position control mode
-    int survey_course = 18000;
-    int survey_length = 1000;
+    int survey_course = g.survey_angle; //cdeg
+    int survey_length = g.survey_length; //cm
     Vector3f target_point;
     float s_course_rad = (survey_course/100) * M_PI /180;
     target_point.x=(survey_length) * cosf(s_course_rad);
     target_point.y=(survey_length) * sinf(s_course_rad);
-    target_point.z=0.0f;
+    //target_point.z=0.0f;
     float dst;
 
     read_barometer();
-    float current_depth = barometer.get_altitude();
-    float descent = -1.0f;
+    float current_depth = barometer.get_altitude(); //m
+    float descent = g.survey_descent; //m
 
     switch(survey_state){
 
@@ -62,9 +62,20 @@ void Sub::survey_run()
                 return;
             }
 
-
             gcs().send_text( MAV_SEVERITY_DEBUG, "Turn in the direction of structures." );
             motors.set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
+
+            if (motors.get_spool_state() != AP_Motors::SpoolState::THROTTLE_UNLIMITED) {
+                    pos_control.relax_velocity_controller_xy();
+                    pos_control.update_xy_controller();
+                    pos_control.relax_z_controller(0.0f);  
+                    pos_control.update_z_controller();
+                    attitude_control.reset_yaw_target_and_rate();
+                    attitude_control.reset_rate_controller_I_terms();
+                    attitude_control.input_thrust_vector_rate_heading(pos_control.get_thrust_vector(), 0.0);
+                    return;
+            }
+
             attitude_control.input_euler_angle_roll_pitch_yaw(0, 0, vehicle_heading, true);
 
             if(last_pilot_heading == vehicle_heading){
@@ -73,6 +84,7 @@ void Sub::survey_run()
                 wp_nav.set_wp_destination(target_point,false);
                 //wp_nav.set_wp_destination_NED(target_point);
                 gcs().send_text( MAV_SEVERITY_DEBUG, "finish turn. SURVEY start. %d" ,survey_state);
+                trip_state = TRIP_outward;
                 survey_state = SURVEY_run;
             }
 
@@ -87,14 +99,15 @@ void Sub::survey_run()
             translate_wpnav_rp(lateral_out, forward_out);
             motors.set_lateral(lateral_out);
             motors.set_forward(forward_out);
-            pos_control.update_z_controller();
+            control_depth();
             dst = wp_nav.get_wp_distance_to_destination();
             //attitude_control.input_euler_angle_roll_pitch_yaw(pos_control.get_roll_cd(), pos_control.get_pitch_cd(), vehicle_heading, true);
             attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(channel_roll->get_control_in(), channel_pitch->get_control_in(),0);
             gcs().send_text( MAV_SEVERITY_DEBUG, "Under survey. Distance to End:%f(cm)",dst);
-
             gcs().send_text( MAV_SEVERITY_DEBUG, "Under survey. survey state %d", survey_state);
+            gcs().send_text( MAV_SEVERITY_DEBUG, "target_depth:%f",target_depth);
             if(dst<5.0){
+                pos_control.init_xy_controller_stopping_point();
                 target_depth = current_depth + descent;
                 gcs().send_text( MAV_SEVERITY_DEBUG, "reached out way point. Descending start...");
                 survey_state = SURVEY_elev;
@@ -105,7 +118,7 @@ void Sub::survey_run()
             
 
             gcs().send_text( MAV_SEVERITY_DEBUG, "Descending. current depth:%f(m)", current_depth);
-            if(target_depth <-10){
+            if(target_depth <g.survey_maxdepth){
                 gcs().send_text( MAV_SEVERITY_DEBUG, "reached out MAX depth. Finish survey...");
                 survey_state = SURVEY_fin;
 
@@ -115,19 +128,37 @@ void Sub::survey_run()
                 pos_control.set_pos_target_z_from_climb_rate_cm(Auto_DIVE_Define_descent_rate);
                 pos_control.update_z_controller();
             }else{
-                control_depth();
-                target_point.x=(survey_length) * cosf(s_course_rad) *-1;
-                target_point.y=(survey_length) * sinf(s_course_rad) *-1;
-                target_point.z=current_depth;
+
+
+                if (trip_state==TRIP_outward){
+                    target_point.x=0;
+                    target_point.y=0;
+                    target_point.z=target_depth*100;
+                    trip_state=TRIP_return;
+                    gcs().send_text( MAV_SEVERITY_DEBUG, "target point.z:%f",target_point.z);
+                
+
+                } else if(trip_state==TRIP_return) {
+                    target_point.x=(survey_length) * cosf(s_course_rad);
+                    target_point.y=(survey_length) * sinf(s_course_rad);
+                    target_point.z=target_depth*100;
+                    trip_state=TRIP_outward;
+                    gcs().send_text( MAV_SEVERITY_DEBUG, "target point.z:%f",target_point.z);
+                }
+                
                 wp_nav.set_wp_destination(target_point,false);
+                pos_control.set_pos_target_z_cm(target_point.z);
+                pos_control.update_z_controller();
                 survey_state = SURVEY_run;
+                    gcs().send_text( MAV_SEVERITY_DEBUG, "target point.z:%f",target_point.z);
             }
 
 
         break;
 
         case SURVEY_fin:
-            
+            attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(channel_roll->get_control_in(), channel_pitch->get_control_in(),0);
+            control_depth();
         break;
     }
 

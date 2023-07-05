@@ -678,10 +678,16 @@ protected:
         SURVEY_fin = 3
     };
 
+    enum TRIP_mode{
+        TRIP_outward = 0,
+        TRIP_return =1
+    };
+
     uint32_t       vehicle_heading;   //target heading
     float          target_depth;
 
     SURVEY_mode    survey_state;   //  ステート
+    TRIP_mode      trip_state;
 
 };
 
