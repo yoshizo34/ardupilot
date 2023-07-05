@@ -673,11 +673,13 @@ protected:
 
     enum SURVEY_mode {
         SURVEY_init = 0,
-        SURVEY_run,
-        SURVEY_elev,
-        SURVEY_fin
+        SURVEY_run = 1,
+        SURVEY_elev = 2,
+        SURVEY_fin = 3
     };
+
     uint32_t       vehicle_heading;   //target heading
+    float          target_depth;
 
     SURVEY_mode    survey_state;   //  ステート
 

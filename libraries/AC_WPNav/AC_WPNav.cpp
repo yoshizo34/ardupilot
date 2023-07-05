@@ -285,7 +285,7 @@ bool AC_WPNav::get_wp_destination_loc(Location& destination) const
     return true;
 }
 
-/// set_wp_destination - set destination waypoints using position vectors (distance from ekf origin in cm)
+///
 ///     terrain_alt should be true if destination.z is an altitude above terrain (false if alt-above-ekf-origin)
 ///     returns false on failure (likely caused by missing terrain data)
 bool AC_WPNav::set_wp_destination(const Vector3f& destination, bool terrain_alt)
