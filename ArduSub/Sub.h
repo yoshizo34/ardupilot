@@ -685,6 +685,8 @@ protected:
 
     uint32_t       vehicle_heading;   //target heading
     float          target_depth;
+    Vector3f       target_point,
+                   start_point;
 
     SURVEY_mode    survey_state;   //  ステート
     TRIP_mode      trip_state;

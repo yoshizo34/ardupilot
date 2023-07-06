@@ -30,11 +30,12 @@ void Sub::survey_run()
     // set to position control mode
     int survey_course = g.survey_angle; //cdeg
     int survey_length = g.survey_length; //cm
-    Vector3f target_point;
+    bool tel_alt;
+    //Vector3f target_point,start_point;
     float s_course_rad = (survey_course/100) * M_PI /180;
-    target_point.x=(survey_length) * cosf(s_course_rad);
-    target_point.y=(survey_length) * sinf(s_course_rad);
-    //target_point.z=0.0f;
+    //target_point.x=(survey_length) * cosf(s_course_rad);
+    //target_point.y=(survey_length) * sinf(s_course_rad);
+    
     float dst;
 
     read_barometer();
@@ -44,6 +45,8 @@ void Sub::survey_run()
     switch(survey_state){
 
         case SURVEY_init:
+            wp_nav.get_vector_NEU(current_loc,start_point,tel_alt);
+            start_point.z = current_depth;
                 //calculate vehicle heading
             if(survey_course - 9000 <0){
                 vehicle_heading = (survey_course - 9000) + 36000;
@@ -80,10 +83,14 @@ void Sub::survey_run()
 
             if(last_pilot_heading == vehicle_heading){
                 wp_nav.wp_and_spline_init();
-                //wp_nav.set_speed_xy(2000.0f);
+                target_point.x=start_point.x+(survey_length) * cosf(s_course_rad);
+                target_point.y=start_point.y+(survey_length) * sinf(s_course_rad);
+                target_point.z=current_depth;
+
                 wp_nav.set_wp_destination(target_point,false);
-                //wp_nav.set_wp_destination_NED(target_point);
+
                 gcs().send_text( MAV_SEVERITY_DEBUG, "finish turn. SURVEY start. %d" ,survey_state);
+                gcs().send_text( MAV_SEVERITY_DEBUG,"start position x:%f, y:%f, z:%f",start_point.x,start_point.y,start_point.z);
                 trip_state = TRIP_outward;
                 survey_state = SURVEY_run;
             }
@@ -101,11 +108,10 @@ void Sub::survey_run()
             motors.set_forward(forward_out);
             control_depth();
             dst = wp_nav.get_wp_distance_to_destination();
-            //attitude_control.input_euler_angle_roll_pitch_yaw(pos_control.get_roll_cd(), pos_control.get_pitch_cd(), vehicle_heading, true);
             attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(channel_roll->get_control_in(), channel_pitch->get_control_in(),0);
-            gcs().send_text( MAV_SEVERITY_DEBUG, "Under survey. Distance to End:%f(cm)",dst);
-            gcs().send_text( MAV_SEVERITY_DEBUG, "Under survey. survey state %d", survey_state);
-            gcs().send_text( MAV_SEVERITY_DEBUG, "target_depth:%f",target_depth);
+            //gcs().send_text( MAV_SEVERITY_DEBUG, "Under survey. Distance to End:%f(cm)",dst);
+            //gcs().send_text( MAV_SEVERITY_DEBUG, "Under survey. survey state %d", survey_state);
+            //gcs().send_text( MAV_SEVERITY_DEBUG, "target_depth:%f",target_depth);
             if(dst<5.0){
                 pos_control.init_xy_controller_stopping_point();
                 target_depth = current_depth + descent;
@@ -131,19 +137,21 @@ void Sub::survey_run()
 
 
                 if (trip_state==TRIP_outward){
-                    target_point.x=0;
-                    target_point.y=0;
+                    target_point = start_point;
                     target_point.z=target_depth*100;
                     trip_state=TRIP_return;
+                    gcs().send_text( MAV_SEVERITY_DEBUG,"start position x:%f, y:%f, z:%f",start_point.x,start_point.y,start_point.z);
                     gcs().send_text( MAV_SEVERITY_DEBUG, "target point.z:%f",target_point.z);
                 
 
                 } else if(trip_state==TRIP_return) {
-                    target_point.x=(survey_length) * cosf(s_course_rad);
-                    target_point.y=(survey_length) * sinf(s_course_rad);
+                    target_point.x=start_point.x + (survey_length) * cosf(s_course_rad);
+                    target_point.y=start_point.y +(survey_length) * sinf(s_course_rad);
                     target_point.z=target_depth*100;
                     trip_state=TRIP_outward;
                     gcs().send_text( MAV_SEVERITY_DEBUG, "target point.z:%f",target_point.z);
+                    gcs().send_text( MAV_SEVERITY_DEBUG,"start position x:%f, y:%f, z:%f",start_point.x,start_point.y,start_point.z);
+                    
                 }
                 
                 wp_nav.set_wp_destination(target_point,false);
