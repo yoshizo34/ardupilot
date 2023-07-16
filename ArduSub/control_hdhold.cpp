@@ -17,7 +17,7 @@ void Sub::hdhold_run()
     float target_roll, target_pitch;
     last_pilot_heading = ahrs.yaw_sensor;
     target_heading = g.set_heading;
-    gcs().send_text( MAV_SEVERITY_DEBUG, "ahrs.yaw_sensor: %i(deg)",    last_pilot_heading );
+    //gcs().send_text( MAV_SEVERITY_DEBUG, "ahrs.yaw_sensor: %i(deg)",    last_pilot_heading );
 
     switch(HDHOLD_state){
         case HDhold_init:

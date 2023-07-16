@@ -198,6 +198,10 @@ public:
         k_param_survey_length, //mode 32 189
         k_param_survey_descent, //mode 32 190
         k_param_survey_maxdepth, //mode 32 191
+        k_param_circle_descent_max, //mode 34 192
+        k_param_circle_descent_rate, //mode 34 193
+
+
 
         // Acro Mode parameters
         k_param_acro_yaw_p = 220, // Used in all modes for get_pilot_desired_yaw_rate
@@ -271,6 +275,8 @@ public:
     AP_Int32        survey_length;
     AP_Float        survey_descent;
     AP_Float        survey_maxdepth;
+    AP_Float        circle_descent_rate;
+    AP_Float        circle_descent_max;
 
     AP_Int8         fs_ekf_action;
     AP_Int8         fs_crash_check;

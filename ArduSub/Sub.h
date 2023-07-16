@@ -442,6 +442,10 @@ private:
     void circle_run();
     bool circle8_init(void);        //  add 2023.06.26
     void circle8_run();             //  add 2023.06.26
+
+    bool circling_descent_init(void);  //
+    void circling_descent_run();       //
+
     bool guided_init(bool ignore_checks = false);
     void guided_pos_control_start();
     void guided_vel_control_start();
@@ -476,6 +480,9 @@ private:
 
     bool survey_init(bool ignore_checks = false);
     void survey_run();
+    
+    bool DP_init();
+    void DP_run();
 
     bool stabilize_init(void);
     void stabilize_run();
@@ -649,7 +656,7 @@ protected:
 // 2023.7.1 for auto dive
 protected:
 
-    static constexpr float Auto_DIVE_Define_descent_rate = -10.0;       //  下降スピード
+    static constexpr float Auto_DIVE_Define_descent_rate = -50.0;       //  下降スピード
     static constexpr float Auto_DIVE_Define_circle_ = 5.0;           //  旋回半径
     Location        LocCircleCenter;     //  現在の円の中心位置
     float           target_Depth;          //  目標深度（m）
@@ -690,6 +697,24 @@ protected:
 
     SURVEY_mode    survey_state;   //  ステート
     TRIP_mode      trip_state;
+
+
+    //for circle descent mode
+    enum CIRCLE_DESCENT_mode {
+        CIRCLE_DESCENT_init = 0,
+        CIRCLE_DESCENT_run = 1,
+        CIRCLE_DESCENT_elev = 2,
+        CIRCLE_DESCENT_fin = 3
+    };
+
+    float descent_pitch = -100.0;
+    float descent_z = 0.0;
+    float descent_max = -1000.0;
+    float circle_rate;
+    float start_heading;
+    CIRCLE_DESCENT_mode  circle_descent_state;
+    Vector3p        CircleCenterPoint;
+    Vector3f        CircleStartPoint;     //     
 
 };
 

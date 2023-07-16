@@ -39,6 +39,10 @@ bool Sub::set_mode(control_mode_t mode, ModeReason reason)
     case CIRCLE8:
         success = circle8_init();
         break;
+    
+    case CIRCLING_DSCNT:
+        success = circling_descent_init();
+        break;
 
     case GUIDED:
         success = guided_init();
@@ -72,6 +76,10 @@ bool Sub::set_mode(control_mode_t mode, ModeReason reason)
 
     case SURVEY_MODE:
         success = survey_init();
+        break;
+
+    case DP_MODE:
+        success = DP_init();
         break;
 
     default:
@@ -148,6 +156,10 @@ void Sub::update_flight_mode()
         circle8_run();
         break;
 
+    case CIRCLING_DSCNT:
+        circling_descent_run();
+        break;
+
     case GUIDED:
         guided_run();
         break;
@@ -180,6 +192,10 @@ void Sub::update_flight_mode()
     
     case SURVEY_MODE:
         survey_run();
+        break;
+
+    case DP_MODE:
+        DP_run();
         break;
         
     default:

@@ -44,6 +44,8 @@ enum control_mode_t : uint8_t {
     AUTO_DIVE =    30,  // Automatically diving start
     HDHOLD =       31,  // Heading hold mode
     SURVEY_MODE =  32,  // Structure survey mode
+    DP_MODE =      33,  // Dynamic Position mode
+    CIRCLING_DSCNT = 34,  // Circle descent mode 
     CIRCLE8 =       100   // automatic circular flight with automatic throttle
 };
 

@@ -231,3 +231,14 @@
  # define DEFAULT_SURVEY_MAXDEPTH      -10.0     // default value for my new parameter
 #endif
 
+/////////////////////////////////////////////////////////////////////////////////////////
+///////   2023.7.13 add
+
+#ifndef DEFAULT_CIRCLE_DESCENT_MAX
+ # define DEFAULT_CIRCLE_DESCENT_MAX      -1000.0     // default value for my new parameter
+#endif
+
+#ifndef DEFAULT_CIRCLE_DESCENT_RATE
+ # define DEFAULT_CIRCLE_DESCENT_RATE     6.0     // default value for my new parameter
+#endif
+
