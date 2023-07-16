@@ -5,6 +5,7 @@
 #include <AP_Common/AP_Common.h>
 
 #include <AP_Gripper/AP_Gripper.h>
+#include <AP_Stats/AP_Stats.h>
 
 #if AP_SCRIPTING_ENABLED
 #include <AP_Scripting/AP_Scripting.h>
@@ -194,6 +195,14 @@ public:
         k_param_cam_tilt_center, // deprecated
         k_param_frame_configuration,
         k_param_set_heading, //mode 31 187
+        k_param_survey_angle, //mode 32 188
+        k_param_survey_length, //mode 32 189
+        k_param_survey_descent, //mode 32 190
+        k_param_survey_maxdepth, //mode 32 191
+        k_param_circle_descent_max, //mode 34 192
+        k_param_circle_descent_rate, //mode 34 193
+
+
 
         // Acro Mode parameters
         k_param_acro_yaw_p = 220, // Used in all modes for get_pilot_desired_yaw_rate
@@ -263,6 +272,12 @@ public:
     //
     AP_Int32        log_bitmask;
     AP_Int32        set_heading;
+    AP_Int32        survey_angle;
+    AP_Int32        survey_length;
+    AP_Float        survey_descent;
+    AP_Float        survey_maxdepth;
+    AP_Float        circle_descent_rate;
+    AP_Float        circle_descent_max;
 
     AP_Int8         fs_ekf_action;
     AP_Int8         fs_crash_check;
@@ -321,6 +336,10 @@ public:
 class ParametersG2 {
 public:
     ParametersG2(void);
+#if STATS_ENABLED == ENABLED
+    // vehicle statistics
+    AP_Stats stats;
+#endif
 
     // var_info for holding Parameter information
     static const struct AP_Param::GroupInfo var_info[];

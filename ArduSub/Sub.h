@@ -71,6 +71,7 @@
 #include "Parameters.h"
 #include "AP_Arming_Sub.h"
 #include "GCS_Sub.h"
+#include "mode.h"
 
 #include <AP_OpticalFlow/AP_OpticalFlow.h>     // Optical Flow library
 
@@ -108,6 +109,17 @@ public:
     friend class ParametersG2;
     friend class AP_Arming_Sub;
     friend class RC_Channels_Sub;
+    friend class Mode;
+    friend class ModeManual;
+    friend class ModeStabilize;
+    friend class ModeAcro;
+    friend class ModeAlthold;
+    friend class ModeGuided;
+    friend class ModePoshold;
+    friend class ModeAuto;
+    friend class ModeCircle;
+    friend class ModeSurface;
+    friend class ModeMotordetect;
 
     Sub(void);
 
@@ -190,9 +202,9 @@ private:
 
     // This is the state of the flight control system
     // There are multiple states defined such as STABILIZE, ACRO,
-    control_mode_t control_mode;
+    Mode::Number control_mode;
 
-    control_mode_t prev_control_mode;
+    Mode::Number prev_control_mode;
 
 #if RCMAP_ENABLED == ENABLED
     RCMapper rcmap;
@@ -233,12 +245,6 @@ private:
     uint8_t depth_sensor_idx;
 
     AP_Motors6DOF motors;
-
-    // Auto
-    AutoMode auto_mode;   // controls which auto controller is run
-
-    // Guided
-    GuidedMode guided_mode;  // controls which controller is run (pos or vel)
 
     // Circle
     bool circle_pilot_yaw_override; // true if pilot is overriding yaw
@@ -416,6 +422,7 @@ private:
     bool verify_wait_delay();
     bool verify_within_distance();
     bool verify_yaw();
+<<<<<<< HEAD
     bool acro_init(void);
     void acro_run();
     void get_pilot_desired_angle_rates(int16_t roll_in, int16_t pitch_in, int16_t yaw_in, float &roll_out, float &pitch_out, float &yaw_out);
@@ -442,6 +449,10 @@ private:
     void circle_run();
     bool circle8_init(void);        //  add 2023.06.26
     void circle8_run();             //  add 2023.06.26
+
+    bool circling_descent_init(void);  //
+    void circling_descent_run();       //
+
     bool guided_init(bool ignore_checks = false);
     void guided_pos_control_start();
     void guided_vel_control_start();
@@ -476,12 +487,18 @@ private:
 
     bool survey_init(bool ignore_checks = false);
     void survey_run();
+    
+    bool DP_init();
+    void DP_run();
 
     bool stabilize_init(void);
     void stabilize_run();
     void control_depth();
     bool manual_init(void);
     void manual_run();
+=======
+
+>>>>>>> bde43f167ef535c1c301c90528d91b4fa0815a91
     void failsafe_sensors_check(void);
     void failsafe_crash_check();
     void failsafe_ekf_check(void);
@@ -495,15 +512,12 @@ private:
     void mainloop_failsafe_enable();
     void mainloop_failsafe_disable();
     void fence_check();
-    bool set_mode(control_mode_t mode, ModeReason reason);
-    bool set_mode(const uint8_t mode, const ModeReason reason) override;
+    bool set_mode(Mode::Number mode, ModeReason reason);
+    bool set_mode(const uint8_t new_mode, const ModeReason reason) override;
     uint8_t get_mode() const override { return (uint8_t)control_mode; }
     void update_flight_mode();
-    void exit_mode(control_mode_t old_control_mode, control_mode_t new_control_mode);
-    bool mode_requires_GPS(control_mode_t mode);
-    bool mode_has_manual_throttle(control_mode_t mode);
-    bool mode_allows_arming(control_mode_t mode, bool arming_from_gcs);
-    void notify_flight_mode(control_mode_t mode);
+    void exit_mode(Mode::Number old_control_mode, Mode::Number new_control_mode);
+    void notify_flight_mode();
     void read_inertia();
     void update_surface_and_bottom_detector();
     void set_surfaced(bool at_surface);
@@ -574,8 +588,7 @@ private:
     void failsafe_internal_temperature_check();
 
     void failsafe_terrain_act(void);
-    bool auto_terrain_recover_start(void);
-    void auto_terrain_recover_run(void);
+
 
     void translate_wpnav_rp(float &lateral_out, float &forward_out);
     void translate_circle_nav_rp(float &lateral_out, float &forward_out);
@@ -583,6 +596,8 @@ private:
 
     bool surface_init(void);
     void surface_run();
+
+    void stats_update();
 
     uint16_t get_pilot_speed_dn() const;
 
@@ -619,6 +634,24 @@ private:
     static_assert(_failsafe_priorities[ARRAY_SIZE(_failsafe_priorities) - 1] == -1,
                   "_failsafe_priorities is missing the sentinel");
 
+    Mode *mode_from_mode_num(const Mode::Number num);
+    void exit_mode(Mode *&old_flightmode, Mode *&new_flightmode);
+
+    Mode *flightmode;
+    ModeManual mode_manual;
+    ModeStabilize mode_stabilize;
+    ModeAcro mode_acro;
+    ModeAlthold mode_althold;
+    ModeAuto mode_auto;
+    ModeGuided mode_guided;
+    ModePoshold mode_poshold;
+    ModeCircle mode_circle;
+    ModeSurface mode_surface;
+    ModeMotordetect mode_motordetect;
+
+    // Auto
+    AutoSubMode auto_mode;   // controls which auto controller is run
+    GuidedSubMode guided_mode;
 
 public:
     void mainloop_failsafe_check();
@@ -649,7 +682,7 @@ protected:
 // 2023.7.1 for auto dive
 protected:
 
-    static constexpr float Auto_DIVE_Define_descent_rate = -10.0;       //  下降スピード
+    static constexpr float Auto_DIVE_Define_descent_rate = -50.0;       //  下降スピード
     static constexpr float Auto_DIVE_Define_circle_ = 5.0;           //  旋回半径
     Location        LocCircleCenter;     //  現在の円の中心位置
     float           target_Depth;          //  目標深度（m）
@@ -678,10 +711,36 @@ protected:
         SURVEY_fin = 3
     };
 
+    enum TRIP_mode{
+        TRIP_outward = 0,
+        TRIP_return =1
+    };
+
     uint32_t       vehicle_heading;   //target heading
     float          target_depth;
+    Vector3f       target_point,
+                   start_point;
 
     SURVEY_mode    survey_state;   //  ステート
+    TRIP_mode      trip_state;
+
+
+    //for circle descent mode
+    enum CIRCLE_DESCENT_mode {
+        CIRCLE_DESCENT_init = 0,
+        CIRCLE_DESCENT_run = 1,
+        CIRCLE_DESCENT_elev = 2,
+        CIRCLE_DESCENT_fin = 3
+    };
+
+    float descent_pitch = -100.0;
+    float descent_z = 0.0;
+    float descent_max = -1000.0;
+    float circle_rate;
+    float start_heading;
+    CIRCLE_DESCENT_mode  circle_descent_state;
+    Vector3p        CircleCenterPoint;
+    Vector3f        CircleStartPoint;     //     
 
 };
 

@@ -53,7 +53,7 @@ void Sub::auto_dive_run()
     }
 
     // Set target depth(cm)  
-    target_Depth = -3000;
+    target_Depth = -10000;
     // set motors to full range
     motors.set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
 
@@ -81,7 +81,7 @@ void Sub::auto_dive_run()
         circle_pilot_yaw_override = true;
         }
 
-    //failsafe_terrain_set_status(circle_nav.update());
+        failsafe_terrain_set_status(circle_nav.update());
 
         ///////////////////////
         // update xy outputs //

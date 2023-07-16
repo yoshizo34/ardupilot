@@ -31,7 +31,6 @@ void AP_Mount_Siyi::init()
     _uart = serial_manager.find_serial(AP_SerialManager::SerialProtocol_Gimbal, 0);
     if (_uart != nullptr) {
         _initialised = true;
-        set_mode((enum MAV_MOUNT_MODE)_params.default_mode.get());
     }
     AP_Mount_Backend::init();
 }
@@ -485,6 +484,9 @@ void AP_Mount_Siyi::process_packet()
 // returns true on success, false if outgoing serial buffer is full
 bool AP_Mount_Siyi::send_packet(SiyiCommandId cmd_id, const uint8_t* databuff, uint8_t databuff_len)
 {
+    if (!_initialised) {
+        return false;
+    }
     // calculate and sanity check packet size
     const uint16_t packet_size = AP_MOUNT_SIYI_PACKETLEN_MIN + databuff_len;
     if (packet_size > AP_MOUNT_SIYI_PACKETLEN_MAX) {
@@ -756,7 +758,7 @@ void AP_Mount_Siyi::update_zoom_control()
 
 // set focus specified as rate, percentage or auto
 // focus in = -1, focus hold = 0, focus out = 1
-bool AP_Mount_Siyi::set_focus(FocusType focus_type, float focus_value)
+SetFocusResult AP_Mount_Siyi::set_focus(FocusType focus_type, float focus_value)
 {
     switch (focus_type) {
     case FocusType::RATE: {
@@ -767,17 +769,23 @@ bool AP_Mount_Siyi::set_focus(FocusType focus_type, float focus_value)
             // Siyi API specifies -1 should be sent as 255
             focus_step = UINT8_MAX;
         }
-        return send_1byte_packet(SiyiCommandId::MANUAL_FOCUS, (uint8_t)focus_step);
+        if (!send_1byte_packet(SiyiCommandId::MANUAL_FOCUS, (uint8_t)focus_step)) {
+            return SetFocusResult::FAILED;
+        }
+        return SetFocusResult::ACCEPTED;
     }
     case FocusType::PCT:
         // not supported
-        return false;
+        return SetFocusResult::INVALID_PARAMETERS;
     case FocusType::AUTO:
-        return send_1byte_packet(SiyiCommandId::AUTO_FOCUS, 1);
+        if (!send_1byte_packet(SiyiCommandId::AUTO_FOCUS, 1)) {
+            return SetFocusResult::FAILED;
+        }
+        return SetFocusResult::ACCEPTED;
     }
 
     // unsupported focus type
-    return false;
+    return SetFocusResult::INVALID_PARAMETERS;
 }
 
 // send camera information message to GCS
