@@ -401,6 +401,38 @@ const AP_Param::Info Sub::var_info[] = {
     // @User: Advanced
     GSCALAR(acro_expo,  "ACRO_EXPO",    ACRO_EXPO_DEFAULT),
 
+    // @Param:     C_DESCENT_RATE;
+    // @DisplayName: Circling descent rate
+    // @Description: rate speed (deg/s) for Cricling descent mode
+    // @Values: variously (deg/s)
+    // @User: Advanced
+    GSCALAR(c_descent_rate,  "C_DESCENT_RATE",    C_DESCENT_RATE_DEFAULT),
+
+    // @Param:     C_DESCENT_PITCH;
+    // @DisplayName: Circling descent pitch
+    // @Description: descent pitch for Cricling descent mode
+    // @Values: minus variously (cm)
+    // @User: Advanced
+    GSCALAR(c_descent_pitch,  "C_DESCENT_PITCH",    C_DESCENT_PITCH_DEFAULT),
+
+    // @Param:     C_DESCENT_MAX;
+    // @DisplayName: Circling descent max
+    // @Description: descent max depth for Cricling descent mode
+    // @Values: minus variously (cm)
+    // @User: Advanced
+    GSCALAR(c_descent_max,  "C_DESCENT_MAX",    C_DESCENT_MAX_DEFAULT),
+
+    // @Param:     C_DESCENT_RADIUS;
+    // @DisplayName: Circling descent radius
+    // @Description: Cricling radius 
+    // @Values: minus variously (cm)
+    // @User: Advanced
+    GSCALAR(c_descent_radius,  "C_DESCENT_RADIUS",    C_DESCENT_RADIUS_DEFAULT),
+
+    // variables not in the g class which contain EEPROM saved variables
+
+
+
     // variables not in the g class which contain EEPROM saved variables
 
 #if AP_CAMERA_ENABLED

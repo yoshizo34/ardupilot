@@ -194,6 +194,10 @@ public:
         k_param_throttle_gain,
         k_param_cam_tilt_center, // deprecated
         k_param_frame_configuration,
+        k_param_c_descent_radius,
+        k_param_c_descent_rate,
+        k_param_c_descent_pitch,
+        k_param_c_descent_max,
 
         // Acro Mode parameters
         k_param_acro_yaw_p = 220, // Used in all modes for get_pilot_desired_yaw_rate
@@ -276,6 +280,11 @@ public:
     AP_Float        throttle_gain;
 
     AP_Int16        lights_steps;
+
+    AP_Float        c_descent_rate;
+    AP_Float        c_descent_pitch;
+    AP_Float        c_descent_max;
+    AP_Float        c_descent_radius;
 
     // Joystick button parameters
     JSButton        jbtn_0;

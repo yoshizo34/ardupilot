@@ -56,6 +56,9 @@ Mode *Sub::mode_from_mode_num(const Mode::Number mode)
     case Mode::Number::MOTOR_DETECT:
         ret = &mode_motordetect;
         break;
+    case Mode::Number::CIRCLING_DESCENT:
+        ret = &mode_circling_descent;
+        break;
     default:
         break;
     }

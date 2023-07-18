@@ -163,6 +163,23 @@
 # define POSHOLD_ENABLED               ENABLED // PosHold flight mode enabled by default
 #endif
 
+
+//////////////////////////////////////////////////////////////////////////////
+// Circling descent parameter defaults
+//
+#ifndef C_DESCENT_RATE_DEFAULT
+# define C_DESCENT_RATE_DEFAULT         6.0             // Circling descent flight mode enabled by default
+#endif
+#ifndef C_DESCENT_PITCH_DEFAULT
+# define C_DESCENT_PITCH_DEFAULT         -100.0             // Circling descent flight mode enabled by default
+#endif
+#ifndef C_DESCENT_MAX_DEFAULT
+# define C_DESCENT_MAX_DEFAULT         -1500.0             // Circling descent flight mode enabled by default
+#endif
+#ifndef C_DESCENT_RADIUS_DEFAULT
+# define C_DESCENT_RADIUS_DEFAULT         1000.0             // Circling descent flight mode enabled by default
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 // Throttle control gains
 //

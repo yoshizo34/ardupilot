@@ -49,7 +49,8 @@ public:
         SURFACE =       9,  // automatically return to surface, pilot maintains horizontal control
         POSHOLD =      16,  // automatic position hold with manual override, with automatic throttle
         MANUAL =       19,  // Pass-through input with no stabilization
-        MOTOR_DETECT = 20   // Automatically detect motors orientation
+        MOTOR_DETECT = 20,   // Automatically detect motors orientation
+        CIRCLING_DESCENT =  30   // Automatic circling descent
     };
 
     // constructor
@@ -442,3 +443,40 @@ protected:
     const char *name() const override { return "MOTORDETECT"; }
     const char *name4() const override { return "DETE"; }
 };
+
+class ModeCircling_Descent : public Mode
+{
+
+public:
+    // inherit constructor
+    using Mode::Mode;
+
+    virtual void run() override;
+
+    bool init(bool ignore_checks) override;
+    bool requires_GPS() const override { return true; }
+    bool has_manual_throttle() const override { return false; }
+    bool allows_arming(bool from_gcs) const override { return true; }
+    bool is_autopilot() const override { return true; }
+
+protected:
+
+    const char *name() const override { return "CIRCLING_DESCENT"; }
+    const char *name4() const override { return "CDST"; }
+    protected:
+  //for circle descent mode
+    enum CIRCLE_DESCENT_mode {
+        CIRCLE_DESCENT_init = 0,
+        CIRCLE_DESCENT_run = 1,
+        CIRCLE_DESCENT_elev = 2,
+        CIRCLE_DESCENT_fin = 3
+    };
+
+    float descent_z = 0.0;
+    float circle_rate;
+    float start_heading;
+    CIRCLE_DESCENT_mode  circle_descent_state;
+    Vector3p        CircleCenterPoint;
+    Vector3f        CircleStartPoint;    
+};
+
